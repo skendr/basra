@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.pagat.com)",
+      "WebFetch(domain:blog.jawaker.com)",
+      "WebFetch(domain:gamerules.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.alefb.org)",
+      "WebFetch(domain:socket.io)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

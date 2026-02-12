@@ -1,0 +1,16 @@
+{
+  "name": "basra",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "app"
+  ],
+  "scripts": {
+    "server:dev": "npm run dev --workspace=server",
+    "server:build": "npm run build --workspace=server",
+    "app:start": "npm run start --workspace=app",
+    "shared:build": "npm run build --workspace=shared"
+  }
+}
