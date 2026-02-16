@@ -1,0 +1,100 @@
+Implement the following plan:
+
+# Fix: Game room creation and joining not working
+
+## Context
+When clicking "Create Game", no room code is shown and the second player can't join. There are two bugs causing this, plus the server needs to be running.
+
+## Root Cause Analysis
+
+### Bug 1: Socket disconnects between screen navigations (critical)
+Every screen calls `useSocket()`, which on mount calls `connectSocket()` and on **unmount** calls `disconnectSocket()` — which destroys the socket instance entirely (`socket.disconnect()` + `socket = null`).
+
+**What happens:**
+1. HomeScreen mounts → creates socket A, connects
+2. User clicks "Create Game" → emits `create-room` on socket A → navigates to `/lobby`
+3. HomeScreen **unmounts** → cleanup runs `disconnectSocket()` → socket A is disconnected and set to null
+4. LobbyScreen mounts → `connectSocket()` creates socket B (new connection, new socket ID)
+5. Server sends `room-created` response to socket A → dead, never received
+6. Server detects socket A disconnect → removes the player/room
+7. LobbyScreen shows no room code (roomCode is still null in store)
+
+### Bug 2: Navigation before server response (race condition)
+`handleCreate` (index.tsx:45-46) emits `create-room` then immediately calls `router.push('/lobby')` without waiting for the `room-created` response. Same for `handleJoin` (index.tsx:59-60).
+
+### Prerequisite: Server must be running
+The server (`npm run server:dev`) is not running — nothing is listening on port 3000.
+
+## Plan
+
+### Step 1: Fix socket lifecycle (`app/src/hooks/useSocket.ts`)
+- Remove `disconnectSocket()` from the useEffect cleanup
+- Only remove the listeners that this specific hook registered (not `removeAllListeners()`)
+- The socket singleton should persist across navigations
+- Add a `connect_error` listener so connection failures are visible
+
+### Step 2: Fix navigation timing (`app/app/index.tsx`)
+- For "Create Game": listen for `room-created` event and navigate to `/lobby` only after it fires
+- For "Join Game": listen for `room-joined` event and navigate to `/lobby` only after it fires
+- Show a loading state while waiting for the server response
+- Handle errors (show alert if server returns an error)
+
+### Step 3: Fix lobby's duplicate listener issue (`app/app/lobby.tsx`)
+- The lobby registers its own `room-joined` listener (line 28-33) to set `opponentName`, but `useSocket` already handles `room-joined` in its effect. For the **joiner**, the lobby's listener should correctly read `opponentNickname`. Verify this works after fixing the socket lifecycle.
+
+## Files to modify
+1. `app/src/hooks/useSocket.ts` — fix cleanup, don't disconnect socket
+2. `app/app/index.tsx` — wait for server response before navigating
+3. `app/src/services/socket.ts` — no changes needed (singleton pattern is fine)
+
+## Verification
+1. Run `npm run shared:build` (if needed) then `npm run server:dev` in one terminal
+2. Run `npm run app:start` in another terminal
+3. Open simulator 1 → press `i`
+4. Open simulator 2 → `xcrun simctl openurl 79659E36-D3A3-41C6-8FDC-054427917896 exp://192.168.0.32:8081`
+5. On simulator 1: enter nickname, click "Create Game" → should see room code in lobby
+6. On simulator 2: enter nickname, enter room code, click "Join" → should join the lobby
+7. Click "Start Game" → both should see the game screen
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/iz/.REDACTED.jsonl
+
+---
+
+(NOBRIDGE) LOG  Bridgeless mode is enabled
+ INFO  
+ 💡 JavaScript logs will be removed from Metro in React Native 0.77! Please use React Native DevTools as your default tool. Tip: Type j in the terminal to open (requires Google Chrome or Microsoft Edge).
+iOS Bundled 124ms node_modules/expo-router/entry.js (1 module)
+iOS Bundled 66ms node_modules/expo-router/entry.js (1 module)
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) LOG  Bridgeless mode is enabled
+ INFO  
+ 💡 JavaScript logs will be removed from Metro in React Native 0.77! Please use React Native DevTools as your default tool. Tip: Type j in the terminal to open (requires Google Chrome or Microsoft Edge).
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) WARN  Socket connect error:socket error
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+ (NOBRIDGE) WARN  Socket connect error: websocket error
+
+getting websocket error - currently i only run npm run app:start - do i need to do anything for the server to run?
+
+---
+
+just eating with a jack does not result in a basra - fix that logic
+
+---
+
+i also want better animation and dragging a card to "eat" other cards by swiping near them - think of balatro style animation to make a more satisfactory game - ultrathink to develop this kind of game-like animation for dragging cards
+
+also add animation for shuffling cards, dealing them out to players, picking up cards, putting them in a pile (that grows as you capture more cards) and final counting back to shuffling and restart, this time switching dealers
+
+find a great and modern way that animation like this is done on react on mobile in ios and android ultrathink to develop this
+
+---
+
+[Request interrupted by user for tool use]

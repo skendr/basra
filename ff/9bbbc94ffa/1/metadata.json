@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "ff9bbbc94ffa",
+  "session_id": "1d8117db-5212-48b4-a231-0e325a1ece4a",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-16T18:35:25.821051Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "app/app/index.tsx",
+    "app/src/hooks/useSocket.ts",
+    "init.md",
+    "shared/src/basra.ts"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 47,
+    "cache_creation_tokens": 112300,
+    "cache_read_tokens": 1480753,
+    "output_tokens": 19440,
+    "api_call_count": 35
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-16T18:35:25.365147Z",
+    "agent_lines": 181,
+    "human_added": 1792,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1973,
+    "agent_percentage": 9.173846933603649
+  },
+  "transcript_path": ".claude/projects/-Users-iz-Documents-projects-basra/1d8117db-5212-48b4-a231-0e325a1ece4a.jsonl"
+}

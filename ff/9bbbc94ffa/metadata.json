@@ -3,9 +3,10 @@
   "checkpoint_id": "ff9bbbc94ffa",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 3,
   "files_touched": [
     "app/app/game.tsx",
+    "app/app/index.tsx",
     "app/src/animation/animations.ts",
     "app/src/animation/springs.ts",
     "app/src/animation/types.ts",
@@ -23,8 +24,10 @@
     "app/src/components/OpponentHand.tsx",
     "app/src/components/TableArea.tsx",
     "app/src/hooks/useCardAnimation.ts",
+    "app/src/hooks/useSocket.ts",
     "app/src/store/useGameStore.ts",
-    "init.md"
+    "init.md",
+    "shared/src/basra.ts"
   ],
   "sessions": [
     {
@@ -33,13 +36,20 @@
       "context": "/ff/9bbbc94ffa/0/context.md",
       "content_hash": "/ff/9bbbc94ffa/0/content_hash.txt",
       "prompt": "/ff/9bbbc94ffa/0/prompt.txt"
+    },
+    {
+      "metadata": "/ff/9bbbc94ffa/1/metadata.json",
+      "transcript": "/ff/9bbbc94ffa/1/full.jsonl",
+      "context": "/ff/9bbbc94ffa/1/context.md",
+      "content_hash": "/ff/9bbbc94ffa/1/content_hash.txt",
+      "prompt": "/ff/9bbbc94ffa/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 48,
-    "cache_creation_tokens": 59659,
-    "cache_read_tokens": 2607119,
-    "output_tokens": 18335,
-    "api_call_count": 46
+    "input_tokens": 95,
+    "cache_creation_tokens": 171959,
+    "cache_read_tokens": 4087872,
+    "output_tokens": 37775,
+    "api_call_count": 81
   }
 }
