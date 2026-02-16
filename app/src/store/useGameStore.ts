@@ -34,6 +34,9 @@ interface GameStore {
   // Last play animation data
   lastPlay: CardPlayedPayload | null;
 
+  // Track last capturer for round-end table card distribution
+  lastCapturePlayerId: string | null;
+
   // Round end data
   roundEndData: RoundEndPayload | null;
 
@@ -68,6 +71,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   targetScore: 121,
   players: [],
   lastPlay: null,
+  lastCapturePlayerId: null,
   roundEndData: null,
   gameOverData: null,
   opponentConnected: true,
@@ -95,6 +99,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         jackBasras: 0,
       })),
       lastPlay: null,
+      lastCapturePlayerId: null,
       roundEndData: null,
       gameOverData: null,
     }),
@@ -114,6 +119,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       table: data.tableAfter,
       currentTurn: data.currentTurn,
       lastPlay: data,
+      lastCapturePlayerId:
+        data.capturedCards.length > 0 ? data.playerId : state.lastCapturePlayerId,
       // If I played, remove the card from my hand
       hand: isMe
         ? state.hand.filter((c) => c.id !== data.card.id)
@@ -171,6 +178,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       roundNumber: 0,
       players: [],
       lastPlay: null,
+      lastCapturePlayerId: null,
       roundEndData: null,
       gameOverData: null,
       opponentConnected: true,

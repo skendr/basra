@@ -8,7 +8,24 @@
       "WebFetch(domain:en.wikipedia.org)",
       "WebFetch(domain:www.alefb.org)",
       "WebFetch(domain:socket.io)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(entire --help:*)",
+      "Bash(entire status)",
+      "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
+      "Bash(node:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(xcode-select:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(echo:*)",
+      "Bash(npm ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(open:*)",
+      "Bash(npx expo install:client:ios:*)",
+      "Bash(npx expo start:*)",
+      "Bash(lsof:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run shared:build:*)"
     ]
   }
 }

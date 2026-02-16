@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSocket } from '../src/hooks/useSocket';
 import { useAppStore } from '../src/store/useAppStore';
+import { getSocket } from '../src/services/socket';
 import { colors, spacing, fontSize, borderRadius } from '../src/theme';
 
 const NICKNAME_KEY = '@basra/nickname';
@@ -24,6 +26,7 @@ export default function HomeScreen() {
 
   const [joinCode, setJoinCode] = useState('');
   const [showJoin, setShowJoin] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(NICKNAME_KEY).then((saved) => {
@@ -36,17 +39,37 @@ export default function HomeScreen() {
     AsyncStorage.setItem(NICKNAME_KEY, name);
   };
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     if (!nickname.trim()) {
       Alert.alert('Enter a nickname', 'Please enter your name first.');
       return;
     }
+    setLoading(true);
     setIsHost(true);
-    createRoom(nickname.trim(), targetScore);
-    router.push('/lobby');
-  };
 
-  const handleJoin = () => {
+    const socket = getSocket();
+
+    const onRoomCreated = () => {
+      cleanup();
+      router.push('/lobby');
+    };
+    const onError = (data: { message: string }) => {
+      cleanup();
+      Alert.alert('Error', data.message);
+    };
+    const cleanup = () => {
+      setLoading(false);
+      socket.off('room-created', onRoomCreated);
+      socket.off('error', onError);
+    };
+
+    socket.on('room-created', onRoomCreated);
+    socket.on('error', onError);
+
+    createRoom(nickname.trim(), targetScore);
+  }, [nickname, targetScore, createRoom, setIsHost, router]);
+
+  const handleJoin = useCallback(() => {
     if (!nickname.trim()) {
       Alert.alert('Enter a nickname', 'Please enter your name first.');
       return;
@@ -55,10 +78,30 @@ export default function HomeScreen() {
       Alert.alert('Enter room code', 'Please enter a room code to join.');
       return;
     }
+    setLoading(true);
     setIsHost(false);
+
+    const socket = getSocket();
+
+    const onRoomJoined = () => {
+      cleanup();
+      router.push('/lobby');
+    };
+    const onError = (data: { message: string }) => {
+      cleanup();
+      Alert.alert('Error', data.message);
+    };
+    const cleanup = () => {
+      setLoading(false);
+      socket.off('room-joined', onRoomJoined);
+      socket.off('error', onError);
+    };
+
+    socket.on('room-joined', onRoomJoined);
+    socket.on('error', onError);
+
     joinRoom(joinCode.trim().toUpperCase(), nickname.trim());
-    router.push('/lobby');
-  };
+  }, [nickname, joinCode, joinRoom, setIsHost, router]);
 
   return (
     <KeyboardAvoidingView
@@ -82,14 +125,19 @@ export default function HomeScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.primaryButton} onPress={handleCreate}>
-          <Text style={styles.primaryButtonText}>Create Game</Text>
+        <TouchableOpacity style={styles.primaryButton} onPress={handleCreate} disabled={loading}>
+          {loading && !showJoin ? (
+            <ActivityIndicator color={colors.text} />
+          ) : (
+            <Text style={styles.primaryButtonText}>Create Game</Text>
+          )}
         </TouchableOpacity>
 
         {!showJoin ? (
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={() => setShowJoin(true)}
+            disabled={loading}
           >
             <Text style={styles.secondaryButtonText}>Join Game</Text>
           </TouchableOpacity>
@@ -104,9 +152,14 @@ export default function HomeScreen() {
               maxLength={5}
               autoCapitalize="characters"
               autoCorrect={false}
+              editable={!loading}
             />
-            <TouchableOpacity style={styles.joinButton} onPress={handleJoin}>
-              <Text style={styles.primaryButtonText}>Join</Text>
+            <TouchableOpacity style={styles.joinButton} onPress={handleJoin} disabled={loading}>
+              {loading ? (
+                <ActivityIndicator color={colors.text} />
+              ) : (
+                <Text style={styles.primaryButtonText}>Join</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}

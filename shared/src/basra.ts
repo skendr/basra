@@ -23,8 +23,8 @@ export function detectBasra(
   // Must capture ALL cards on the table
   if (capturedCards.length !== tableBefore.length) return 'none';
 
-  // Jack basra (30 pts)
-  if (played.rank === 'J') return 'jack-basra';
+  // Jack sweeps all cards by default — that's not a basra
+  if (played.rank === 'J') return 'none';
 
   // Diamond 7 or regular numeral basra (10 pts)
   return 'basra';

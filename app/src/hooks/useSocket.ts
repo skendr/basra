@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { Socket } from 'socket.io-client';
-import { connectSocket, disconnectSocket } from '../services/socket';
+import { connectSocket, getSocket } from '../services/socket';
 import { useAppStore } from '../store/useAppStore';
 import { useGameStore } from '../store/useGameStore';
 import {
@@ -33,64 +33,65 @@ export function useSocket() {
     const socket = connectSocket();
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      setConnected(true);
-    });
+    const onConnect = () => setConnected(true);
+    const onDisconnect = () => setConnected(false);
+    const onConnectError = (err: Error) => console.warn('Socket connect error:', err.message);
 
-    socket.on('disconnect', () => {
-      setConnected(false);
-    });
-
-    socket.on('room-created', (data: RoomCreatedPayload) => {
+    const onRoomCreated = (data: RoomCreatedPayload) => {
       setPlayerId(data.playerId);
       setRoomCode(data.roomCode);
       setMyId(data.playerId);
-    });
+    };
 
-    socket.on('room-joined', (data: RoomJoinedPayload) => {
+    const onRoomJoined = (data: RoomJoinedPayload) => {
       setPlayerId(data.playerId);
       setRoomCode(data.roomCode);
       setMyId(data.playerId);
-    });
+    };
 
-    socket.on('game-start', (data: GameStartPayload) => {
+    const onGameStartHandler = (data: GameStartPayload) => {
       const myId = useAppStore.getState().playerId;
       if (myId) {
         onGameStart(data, myId);
       }
-    });
+    };
 
-    socket.on('cards-dealt', (data: CardsDealtPayload) => {
-      onCardsDealt(data);
-    });
+    const onCardsDealtHandler = (data: CardsDealtPayload) => onCardsDealt(data);
+    const onCardPlayedHandler = (data: CardPlayedPayload) => onCardPlayed(data);
+    const onRoundEndHandler = (data: RoundEndPayload) => onRoundEnd(data);
+    const onGameOverHandler = (data: GameOverPayload) => onGameOver(data);
+    const onOpponentDisconnected = () => setOpponentConnected(false);
+    const onOpponentReconnected = () => setOpponentConnected(true);
+    const onError = (data: ErrorPayload) => console.warn('Server error:', data.message);
 
-    socket.on('card-played', (data: CardPlayedPayload) => {
-      onCardPlayed(data);
-    });
-
-    socket.on('round-end', (data: RoundEndPayload) => {
-      onRoundEnd(data);
-    });
-
-    socket.on('game-over', (data: GameOverPayload) => {
-      onGameOver(data);
-    });
-
-    socket.on('opponent-disconnected', () => {
-      setOpponentConnected(false);
-    });
-
-    socket.on('opponent-reconnected', () => {
-      setOpponentConnected(true);
-    });
-
-    socket.on('error', (data: ErrorPayload) => {
-      console.warn('Server error:', data.message);
-    });
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+    socket.on('connect_error', onConnectError);
+    socket.on('room-created', onRoomCreated);
+    socket.on('room-joined', onRoomJoined);
+    socket.on('game-start', onGameStartHandler);
+    socket.on('cards-dealt', onCardsDealtHandler);
+    socket.on('card-played', onCardPlayedHandler);
+    socket.on('round-end', onRoundEndHandler);
+    socket.on('game-over', onGameOverHandler);
+    socket.on('opponent-disconnected', onOpponentDisconnected);
+    socket.on('opponent-reconnected', onOpponentReconnected);
+    socket.on('error', onError);
 
     return () => {
-      socket.removeAllListeners();
-      disconnectSocket();
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('connect_error', onConnectError);
+      socket.off('room-created', onRoomCreated);
+      socket.off('room-joined', onRoomJoined);
+      socket.off('game-start', onGameStartHandler);
+      socket.off('cards-dealt', onCardsDealtHandler);
+      socket.off('card-played', onCardPlayedHandler);
+      socket.off('round-end', onRoundEndHandler);
+      socket.off('game-over', onGameOverHandler);
+      socket.off('opponent-disconnected', onOpponentDisconnected);
+      socket.off('opponent-reconnected', onOpponentReconnected);
+      socket.off('error', onError);
     };
   }, []);
 

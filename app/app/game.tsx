@@ -1,19 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card as CardType } from '@basra/shared';
 import { useSocket } from '../src/hooks/useSocket';
 import { useGameStore } from '../src/store/useGameStore';
 import { useAppStore } from '../src/store/useAppStore';
-import { lightTap, mediumTap, successVibration } from '../src/utils/haptics';
-import Card from '../src/components/Card';
-import CardHand from '../src/components/CardHand';
-import TableArea from '../src/components/TableArea';
-import OpponentHand from '../src/components/OpponentHand';
 import ScoreBar from '../src/components/ScoreBar';
-import DeckPile from '../src/components/DeckPile';
-import BasraToast from '../src/components/BasraToast';
 import TurnIndicator from '../src/components/TurnIndicator';
+import GameBoard from '../src/components/GameBoard';
+import BasraToast from '../src/components/BasraToast';
 import { colors, spacing, fontSize } from '../src/theme';
 
 export default function GameScreen() {
@@ -34,7 +28,6 @@ export default function GameScreen() {
     opponentConnected,
   } = useGameStore();
 
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [showBasra, setShowBasra] = useState(false);
   const [isJackBasra, setIsJackBasra] = useState(false);
 
@@ -57,35 +50,6 @@ export default function GameScreen() {
     }
   }, [lastPlay]);
 
-  // Haptic feedback on capture
-  useEffect(() => {
-    if (lastPlay && lastPlay.capturedCards.length > 0) {
-      if (lastPlay.isBasra || lastPlay.isJackBasra) {
-        successVibration();
-      } else {
-        mediumTap();
-      }
-    }
-  }, [lastPlay]);
-
-  const handleCardPress = useCallback(
-    (card: CardType) => {
-      if (!isMyTurn) return;
-
-      if (selectedCardId === card.id) {
-        // Double tap / confirm: play the card
-        lightTap();
-        emitPlayCard(card.id);
-        setSelectedCardId(null);
-      } else {
-        // Select the card
-        lightTap();
-        setSelectedCardId(card.id);
-      }
-    },
-    [isMyTurn, selectedCardId, emitPlayCard]
-  );
-
   if (!me || !opponent) {
     return (
       <View style={styles.container}>
@@ -107,14 +71,6 @@ export default function GameScreen() {
         deckRemaining={deckRemaining}
       />
 
-      {/* Opponent Hand */}
-      <OpponentHand
-        cardCount={opponentCardCount}
-        nickname={opponent.nickname}
-        score={opponent.score}
-        capturedCount={opponent.capturedCount}
-      />
-
       {/* Disconnection Warning */}
       {!opponentConnected && (
         <View style={styles.disconnectBanner}>
@@ -125,28 +81,22 @@ export default function GameScreen() {
       {/* Turn Indicator */}
       <TurnIndicator isMyTurn={isMyTurn} />
 
-      {/* Table */}
-      <TableArea cards={table} />
-
-      {/* My capture pile info */}
-      <DeckPile
+      {/* Game Board — single flat card layer with all animations */}
+      <GameBoard
+        hand={hand}
+        table={table}
+        opponentCardCount={opponentCardCount}
+        deckRemaining={deckRemaining}
+        isMyTurn={isMyTurn}
+        myId={myId}
         myCapturedCount={me.capturedCount}
         myBasras={me.basras}
         myJackBasras={me.jackBasras}
+        opponentCapturedCount={opponent.capturedCount}
+        opponentBasras={opponent.basras}
+        opponentJackBasras={opponent.jackBasras}
+        onPlayCard={emitPlayCard}
       />
-
-      {/* My Hand */}
-      <View style={styles.handSection}>
-        <CardHand
-          cards={hand}
-          onCardPress={handleCardPress}
-          selectedCardId={selectedCardId}
-          disabled={!isMyTurn}
-        />
-        {selectedCardId && isMyTurn && (
-          <Text style={styles.hint}>Tap again to play</Text>
-        )}
-      </View>
 
       {/* Basra Toast */}
       <BasraToast
@@ -162,15 +112,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
-  },
-  handSection: {
-    alignItems: 'center',
-    paddingBottom: spacing.md,
-  },
-  hint: {
-    fontSize: fontSize.xs,
-    color: colors.accent,
-    marginTop: spacing.xs,
   },
   loadingText: {
     color: colors.text,
