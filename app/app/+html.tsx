@@ -23,16 +23,17 @@ export default function Root({ children }: PropsWithChildren) {
 }
 
 const responsiveStyle = `
-body {
-  background-color: #1a1a2e;
+html, body, #root {
+  height: 100%;
   margin: 0;
   padding: 0;
+}
+body {
+  background-color: #1a1a2e;
   overflow: hidden;
 }
 #root {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  flex-direction: column;
 }
 `;
