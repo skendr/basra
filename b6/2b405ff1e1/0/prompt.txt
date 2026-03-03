@@ -1,0 +1,193 @@
+Implement the following plan:
+
+# Balatro-Style Card Animation Overhaul
+
+## Context
+The current game has minimal animations — tap-to-select/tap-to-play, cards teleport between zones, no visual feedback for captures. We want satisfying Balatro-inspired animations: drag-to-play with capture preview, dealing from deck, capture fly-to-pile, shuffle, round lifecycle transitions. Already installed: Reanimated 3.16.0, Gesture Handler 2.20.0 (unused), expo-haptics.
+
+## Core Architecture Change: Flat Card Layer
+
+**Problem**: Cards currently live in separate flex-layout components (CardHand, TableArea, OpponentHand). Can't animate between zones because removing from one React subtree and adding to another destroys the component.
+
+**Solution**: ALL cards rendered as siblings in a single absolute-positioned `CardLayer`. Each card has Reanimated shared values (x, y, rotation, scale, opacity, zIndex). Zone transitions = animating position values. Uses `makeMutable()` for dynamic card creation (not `useSharedValue` which requires hook context).
+
+```
+SafeAreaView
+  ScoreBar (flex, unchanged)
+  GameBoard (flex:1, position:relative, onLayout for dimensions)
+    BoardBackground (table felt, zone outlines)
+    AnimatedCard * N (position:absolute, shared-value transforms)
+    CapturedPile * 2 (visual stacks)
+    TurnIndicator, BasraToast (overlays)
+```
+
+## Animation Queue
+
+Server events flow through a queue instead of directly updating the store:
+
+```
+Socket event → useAnimationQueue.enqueue() → play animation sequence → commitToStore()
+```
+
+- Events queue up and process sequentially (prevents overlap)
+- Each animation function returns a Promise (via `withSpring`/`withTiming` completion callbacks + `runOnJS`)
+- Store updates only after animation finishes, keeping visual and logical state in sync
+
+## Key Animation Sequences
+
+### 1. Game Start / New Deal
+- Deck jiggles (5 cycles, rotation ±0.05rad, x ±4px, 80ms each)
+- Cards fly from deck to opponent (staggered 120ms, face-down)
+- Cards fly to table (staggered, flip to face-up mid-flight)
+- Cards fly to hand (staggered, fan arc positions, face-up)
+
+### 2. Drag-to-Play (Gesture.Pan on hand cards)
+- **Begin**: scale 1→1.1, zIndex 1000, store start position
+- **Update**: translate follows finger, slight rotation from velocity, check if over table zone
+- **Capture preview**: when near table, run `findCaptures()` from `@basra/shared` client-side, wobble targetable table cards (scale pulse to 1.15, damping:4)
+- **End over table**: emit `play-card`, card snaps to table center
+- **End outside table**: spring back to hand position
+
+### 3. Card Played (my card)
+- Card already near table from drag → spring to table center
+- If capture: 150ms pause → captured cards + played card converge to center → scale pulse 1.15 → all fly to my pile (staggered 30ms) with scale→0.5, opacity→0 → remove entities
+- If basra: celebration toast + success haptic
+- If no capture: card joins table, all table cards reposition
+- Re-fan remaining hand cards
+
+### 4. Opponent Plays
+- Card back flies from opponent area to table center
+- Flip effect: scaleX 1→0 (100ms), swap content, scaleX 0→1 (100ms)
+- Same capture/basra logic but flies to opponent pile
+- Re-fan opponent remaining cards
+
+### 5. Round End
+- 800ms delay
+- Remaining table cards fly to last capturer's pile (staggered 50ms)
+- 600ms pause → navigate to score screen
+
+## Spring Configs (`springs.ts`)
+
+| Name | Damping | Stiffness | Mass | Use |
+|------|---------|-----------|------|-----|
+| card | 12 | 100 | 0.8 | Standard movement (deal, fly) |
+| quick | 15 | 200 | 0.6 | Capture snap, settle |
+| bouncy | 6 | 150 | 1.0 | Basra celebration, overshoot |
+| settle | 14 | 80 | 1.0 | Return to hand after cancelled drag |
+| heavy | 18 | 120 | 1.2 | Pile drop |
+
+## Zone Position Calculations (`useGameLayout.ts`)
+
+Board split (top to bottom):
+- 0-6%: opponent hand (small card backs, fanned)
+- 8%: opponent pile (top-right)
+- 22-58%: table area (scattered grid, small cards)
+- 62%: deck position (center-left) + my pile (right)
+- 82%: my hand (fanned arc, full-size cards)
+
+Hand fan: cards spread with ~50px gap (max), slight parabolic arc (8px height), rotation ±0.04rad from center.
+Table scatter: 5-column grid with ±7px jitter for organic feel.
+
+## Card Entity Data Structure
+
+```typescript
+interface CardEntity {
+  id: string;
+  card: Card | null;        // null for face-down unknowns
+  faceUp: boolean;
+  zone: 'deck' | 'hand' | 'opponentHand' | 'table' | 'myPile' | 'opponentPile';
+  // All makeMutable() shared values:
+  x, y, rotation, scale, opacity, zIndex,
+  isDragging, dragOffsetX, dragOffsetY
+}
+```
+
+Max ~20 cards visible at once (4 hand + 4 opponent + ~10 table + 2-3 deck visual).
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `app/src/animation/types.ts` | CardEntity, ZoneLayout, AnimationEvent types |
+| `app/src/animation/springs.ts` | Spring configs + timing constants |
+| `app/src/animation/utils.ts` | Promise-wrapped animation helpers (animateSpring, animatePosition, delay) |
+| `app/src/animation/useGameLayout.ts` | Board dimensions → zone position calculator |
+| `app/src/animation/useCardEntities.ts` | CardEntity pool with makeMutable |
+| `app/src/animation/useAnimationQueue.ts` | Sequential event queue + animation processor |
+| `app/src/animation/useDragToPlay.ts` | Gesture.Pan factory + capture preview |
+| `app/src/animation/animations.ts` | All sequence functions (gameStart, myPlay, opponentPlay, deal, roundEnd) |
+| `app/src/components/GameBoard.tsx` | Main board container, onLayout, renders CardLayer |
+| `app/src/components/AnimatedCard.tsx` | Single card: shared-value transform + GestureDetector |
+| `app/src/components/CapturedPile.tsx` | Visual pile stack with count |
+| `app/src/components/BoardBackground.tsx` | Table felt zone (decorative) |
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `app/app/game.tsx` | Replace zone components with single `<GameBoard />` |
+| `app/src/hooks/useSocket.ts` | Route game events through animation queue instead of direct store calls |
+| `app/src/store/useGameStore.ts` | Add commit methods called by queue after animation |
+| `app/src/components/Card.tsx` | Extract face rendering for reuse in AnimatedCard |
+
+## Files to Delete (replaced by GameBoard)
+
+- `app/src/components/CardHand.tsx`
+- `app/src/components/TableArea.tsx`
+- `app/src/components/OpponentHand.tsx`
+- `app/src/components/DeckPile.tsx`
+- `app/src/hooks/useCardAnimation.ts`
+
+## Implementation Phases
+
+### Phase 1: Foundation
+Create `animation/` directory with types, springs, utils, useGameLayout, useCardEntities. Pure additive, no visual changes.
+
+### Phase 2: Static Card Layer
+Create AnimatedCard, BoardBackground, CapturedPile, GameBoard. Replace old zone components in game.tsx. Cards render at correct positions but don't animate yet.
+
+### Phase 3: Animation Queue + Socket Wiring
+Create useAnimationQueue, animations.ts (skeleton pass-through). Route useSocket game events through queue. Game works identically but events flow through new pipeline.
+
+### Phase 4: Deal Animation
+Implement shuffle + deal sequences. Cards fly from deck on game-start and mid-game deals.
+
+### Phase 5: Drag-to-Play
+Create useDragToPlay. Gesture.Pan on hand cards, capture preview wobble, drop zone detection.
+
+### Phase 6: Play + Capture Animations
+Implement myPlaySequence, opponentPlaySequence. Card convergence, pile fly, basra celebration, haptics.
+
+### Phase 7: Round End + Polish
+Implement roundEndSequence. Pile growth visual. Shadow depth on drag. Spring tuning for Balatro feel.
+
+### Phase 8: Cleanup
+Delete old components. Final testing. Performance check (target 60fps).
+
+## Verification
+1. `npm run shared:build && npm run server:dev` in terminal 1
+2. `npm run app:start` in terminal 2, open two simulators
+3. Create game → should see shuffle + deal animation (cards fly from deck)
+4. Drag card from hand toward table → capturable cards wobble → release plays card
+5. Capture → cards converge and fly to pile
+6. Basra → celebration animation + haptic
+7. Mid-round deal → new cards fly from deck
+8. Round end → remaining cards fly to pile → score screen
+9. Next round → new shuffle + deal with dealer switch
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/iz/.REDACTED.jsonl
+
+---
+
+cards do not seem to be centered on the board
+
+also when you lift them to the top left corner they float up and stay there
+
+also then last person to "eat" cards in the entire round eats the remaining cards on the table (i.,e. if there are 2 cards after the game is over, the person who last ate any card gets those 2 cards)
+
+otherwise looks good - polish it more stylistically
+
+---
+
+update init.md afterwards, then write me step by step instruction to get this app published on app store and play store, as well as set the server to run online

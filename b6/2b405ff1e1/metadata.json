@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "b62b405ff1e1",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "DEPLOY.md",
+    "app/app/game.tsx",
+    "app/src/animation/animations.ts",
+    "app/src/animation/springs.ts",
+    "app/src/animation/types.ts",
+    "app/src/animation/useAnimationQueue.ts",
+    "app/src/animation/useCardEntities.ts",
+    "app/src/animation/useDragToPlay.ts",
+    "app/src/animation/useGameLayout.ts",
+    "app/src/animation/utils.ts",
+    "app/src/components/AnimatedCard.tsx",
+    "app/src/components/BoardBackground.tsx",
+    "app/src/components/CapturedPile.tsx",
+    "app/src/components/GameBoard.tsx",
+    "app/src/store/useGameStore.ts",
+    "init.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b6/2b405ff1e1/0/metadata.json",
+      "transcript": "/b6/2b405ff1e1/0/full.jsonl",
+      "context": "/b6/2b405ff1e1/0/context.md",
+      "content_hash": "/b6/2b405ff1e1/0/content_hash.txt",
+      "prompt": "/b6/2b405ff1e1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 35,
+    "cache_creation_tokens": 59656,
+    "cache_read_tokens": 3363455,
+    "output_tokens": 24002,
+    "api_call_count": 29
+  }
+}
