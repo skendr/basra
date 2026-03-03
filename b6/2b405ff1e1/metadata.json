@@ -3,10 +3,15 @@
   "checkpoint_id": "b62b405ff1e1",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     "DEPLOY.md",
+    "app/app.json",
+    "app/app/+html.tsx",
     "app/app/game.tsx",
+    "app/app/index.tsx",
+    "app/app/lobby.tsx",
+    "app/metro.config.js",
     "app/src/animation/animations.ts",
     "app/src/animation/springs.ts",
     "app/src/animation/types.ts",
@@ -19,8 +24,13 @@
     "app/src/components/BoardBackground.tsx",
     "app/src/components/CapturedPile.tsx",
     "app/src/components/GameBoard.tsx",
+    "app/src/services/socket.ts",
     "app/src/store/useGameStore.ts",
-    "init.md"
+    "app/src/utils/haptics.ts",
+    "init.md",
+    "package.json",
+    "server/Dockerfile",
+    "vercel.json"
   ],
   "sessions": [
     {
@@ -29,13 +39,20 @@
       "context": "/b6/2b405ff1e1/0/context.md",
       "content_hash": "/b6/2b405ff1e1/0/content_hash.txt",
       "prompt": "/b6/2b405ff1e1/0/prompt.txt"
+    },
+    {
+      "metadata": "/b6/2b405ff1e1/1/metadata.json",
+      "transcript": "/b6/2b405ff1e1/1/full.jsonl",
+      "context": "/b6/2b405ff1e1/1/context.md",
+      "content_hash": "/b6/2b405ff1e1/1/content_hash.txt",
+      "prompt": "/b6/2b405ff1e1/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 35,
-    "cache_creation_tokens": 59656,
-    "cache_read_tokens": 3363455,
-    "output_tokens": 24002,
-    "api_call_count": 29
+    "input_tokens": 89,
+    "cache_creation_tokens": 144336,
+    "cache_read_tokens": 7140617,
+    "output_tokens": 44346,
+    "api_call_count": 81
   }
 }

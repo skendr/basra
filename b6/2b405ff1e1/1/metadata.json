@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "b62b405ff1e1",
+  "session_id": "2fea3a0d-48fd-4ffc-baf8-abe08f74c326",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-03T22:25:23.38215Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "app/app.json",
+    "app/app/+html.tsx",
+    "app/app/index.tsx",
+    "app/app/lobby.tsx",
+    "app/metro.config.js",
+    "app/src/services/socket.ts",
+    "app/src/utils/haptics.ts",
+    "package.json",
+    "server/Dockerfile",
+    "vercel.json"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "ac4d9128-1d62-472d-a9ea-1e4240a6b5e1",
+  "token_usage": {
+    "input_tokens": 54,
+    "cache_creation_tokens": 84680,
+    "cache_read_tokens": 3777162,
+    "output_tokens": 20344,
+    "api_call_count": 52
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-03T22:25:22.955107Z",
+    "agent_lines": 0,
+    "human_added": 152,
+    "human_modified": 8,
+    "human_removed": 0,
+    "total_committed": 152,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-iz-Documents-projects-basra/2fea3a0d-48fd-4ffc-baf8-abe08f74c326.jsonl"
+}
