@@ -17,6 +17,7 @@ export default function LobbyScreen() {
 
   const [opponentName, setOpponentName] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     const { getSocket } = require('../src/services/socket');
@@ -57,6 +58,27 @@ export default function LobbyScreen() {
     }
   };
 
+  const handleShareLink = async () => {
+    if (!roomCode) return;
+    const baseUrl = Platform.OS === 'web'
+      ? window.location.origin
+      : 'https://basra-seven.vercel.app';
+    const link = `${baseUrl}/${roomCode}`;
+    if (Platform.OS === 'web') {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Join my Basra game!', url: link });
+          return;
+        } catch {}
+      }
+      await navigator.clipboard.writeText(link);
+    } else {
+      await Clipboard.setStringAsync(link);
+    }
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
   const handleStart = () => {
     playerReady();
   };
@@ -69,6 +91,14 @@ export default function LobbyScreen() {
 
       {roomCode && (
         <RoomCodeCard code={roomCode} onCopy={handleCopy} copied={copied} />
+      )}
+
+      {roomCode && (
+        <TouchableOpacity style={styles.shareButton} onPress={handleShareLink}>
+          <Text style={styles.shareButtonText}>
+            {linkCopied ? 'Link Copied!' : 'Share Invite Link'}
+          </Text>
+        </TouchableOpacity>
       )}
 
       <View style={styles.playersSection}>
@@ -137,6 +167,19 @@ const styles = StyleSheet.create({
   },
   playerName: {
     fontSize: fontSize.lg,
+    color: colors.text,
+  },
+  shareButton: {
+    marginTop: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
     color: colors.text,
   },
   startButton: {
