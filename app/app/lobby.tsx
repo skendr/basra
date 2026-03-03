@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSocket } from '../src/hooks/useSocket';
 import { useAppStore } from '../src/store/useAppStore';
@@ -46,7 +47,11 @@ export default function LobbyScreen() {
 
   const handleCopy = async () => {
     if (roomCode) {
-      await Clipboard.setStringAsync(roomCode);
+      if (Platform.OS === 'web') {
+        await navigator.clipboard.writeText(roomCode);
+      } else {
+        await Clipboard.setStringAsync(roomCode);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

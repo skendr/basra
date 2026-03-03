@@ -11,6 +11,8 @@
     "server:dev": "npm run dev --workspace=server",
     "server:build": "npm run build --workspace=server",
     "app:start": "npm run start --workspace=app",
+    "app:web": "cd app && npx expo start --web",
+    "app:web:export": "cd app && npx expo export --platform web",
     "shared:build": "npm run build --workspace=shared"
   }
 }

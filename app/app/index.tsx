@@ -10,6 +10,14 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+
+function showAlert(title: string, message?: string) {
+  if (Platform.OS === 'web') {
+    window.alert(message ? `${title}: ${message}` : title);
+  } else {
+    Alert.alert(title, message);
+  }
+}
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSocket } from '../src/hooks/useSocket';
@@ -41,7 +49,7 @@ export default function HomeScreen() {
 
   const handleCreate = useCallback(() => {
     if (!nickname.trim()) {
-      Alert.alert('Enter a nickname', 'Please enter your name first.');
+      showAlert('Enter a nickname', 'Please enter your name first.');
       return;
     }
     setLoading(true);
@@ -55,7 +63,7 @@ export default function HomeScreen() {
     };
     const onError = (data: { message: string }) => {
       cleanup();
-      Alert.alert('Error', data.message);
+      showAlert('Error', data.message);
     };
     const cleanup = () => {
       setLoading(false);
@@ -71,11 +79,11 @@ export default function HomeScreen() {
 
   const handleJoin = useCallback(() => {
     if (!nickname.trim()) {
-      Alert.alert('Enter a nickname', 'Please enter your name first.');
+      showAlert('Enter a nickname', 'Please enter your name first.');
       return;
     }
     if (!joinCode.trim()) {
-      Alert.alert('Enter room code', 'Please enter a room code to join.');
+      showAlert('Enter room code', 'Please enter a room code to join.');
       return;
     }
     setLoading(true);
@@ -89,7 +97,7 @@ export default function HomeScreen() {
     };
     const onError = (data: { message: string }) => {
       cleanup();
-      Alert.alert('Error', data.message);
+      showAlert('Error', data.message);
     };
     const cleanup = () => {
       setLoading(false);
