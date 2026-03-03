@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, SafeAreaView, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSocket } from '../src/hooks/useSocket';
@@ -24,21 +24,44 @@ export default function GameScreen() {
     targetScore,
     players,
     lastPlay,
+    lastCapturePlayerId,
     phase,
     opponentConnected,
   } = useGameStore();
 
   const [showBasra, setShowBasra] = useState(false);
   const [isJackBasra, setIsJackBasra] = useState(false);
+  const navigatedRef = useRef(false);
 
   const isMyTurn = currentTurn === myId;
   const me = players.find((p) => p.id === myId);
   const opponent = players.find((p) => p.id !== myId);
 
-  // Navigate to score screen on round end or game over
+  // Reset navigation guard when we return to playing
+  useEffect(() => {
+    if (phase === 'playing') {
+      navigatedRef.current = false;
+    }
+  }, [phase]);
+
+  // Navigate to score screen after round-end animation completes
+  const onRoundEndAnimDone = useCallback(() => {
+    if (!navigatedRef.current) {
+      navigatedRef.current = true;
+      router.push('/score');
+    }
+  }, [router]);
+
+  // Fallback: navigate after timeout if animation callback doesn't fire
   useEffect(() => {
     if (phase === 'round-end' || phase === 'game-over') {
-      router.push('/score');
+      const timer = setTimeout(() => {
+        if (!navigatedRef.current) {
+          navigatedRef.current = true;
+          router.push('/score');
+        }
+      }, 2500);
+      return () => clearTimeout(timer);
     }
   }, [phase]);
 
@@ -60,7 +83,6 @@ export default function GameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Score Bar */}
       <ScoreBar
         myScore={me.score}
         opponentScore={opponent.score}
@@ -71,17 +93,14 @@ export default function GameScreen() {
         deckRemaining={deckRemaining}
       />
 
-      {/* Disconnection Warning */}
       {!opponentConnected && (
         <View style={styles.disconnectBanner}>
           <Text style={styles.disconnectText}>Opponent disconnected...</Text>
         </View>
       )}
 
-      {/* Turn Indicator */}
       <TurnIndicator isMyTurn={isMyTurn} />
 
-      {/* Game Board — single flat card layer with all animations */}
       <GameBoard
         hand={hand}
         table={table}
@@ -89,6 +108,8 @@ export default function GameScreen() {
         deckRemaining={deckRemaining}
         isMyTurn={isMyTurn}
         myId={myId}
+        phase={phase}
+        lastCapturePlayerId={lastCapturePlayerId}
         myCapturedCount={me.capturedCount}
         myBasras={me.basras}
         myJackBasras={me.jackBasras}
@@ -96,9 +117,9 @@ export default function GameScreen() {
         opponentBasras={opponent.basras}
         opponentJackBasras={opponent.jackBasras}
         onPlayCard={emitPlayCard}
+        onRoundEndAnimDone={onRoundEndAnimDone}
       />
 
-      {/* Basra Toast */}
       <BasraToast
         visible={showBasra}
         isJackBasra={isJackBasra}

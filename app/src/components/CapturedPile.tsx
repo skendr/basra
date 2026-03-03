@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fontSize, borderRadius, cardDimensions } from '../theme';
+import { colors, fontSize, cardDimensions } from '../theme';
 
 interface CapturedPileProps {
   count: number;
@@ -7,11 +7,10 @@ interface CapturedPileProps {
   jackBasras: number;
   x: number;
   y: number;
-  label?: string;
 }
 
-const SMALL_W = cardDimensions.width * 0.55;
-const SMALL_H = cardDimensions.height * 0.55;
+const PILE_W = 40;
+const PILE_H = 56;
 
 export default function CapturedPile({
   count,
@@ -19,32 +18,49 @@ export default function CapturedPile({
   jackBasras,
   x,
   y,
-  label,
 }: CapturedPileProps) {
+  const stackCount = Math.min(3, count);
+
   return (
     <View style={[styles.container, { left: x, top: y }]}>
-      {/* Stack visual — show up to 3 offset cards */}
-      {count > 0 && (
-        <View style={styles.stack}>
-          {[...Array(Math.min(3, count))].map((_, i) => (
+      {/* Stack visual */}
+      <View style={styles.stackWrap}>
+        {count === 0 ? (
+          <View style={styles.emptySlot} />
+        ) : (
+          [...Array(stackCount)].map((_, i) => (
             <View
               key={i}
               style={[
                 styles.stackCard,
-                { top: -i * 2, left: -i * 1.5 },
+                {
+                  top: -i * 2,
+                  left: -i * 1,
+                  shadowOpacity: 0.1 + i * 0.05,
+                },
               ]}
             />
-          ))}
-        </View>
-      )}
-      <Text style={styles.count}>{count}</Text>
+          ))
+        )}
+      </View>
+
+      {/* Count badge */}
+      <View style={styles.countBadge}>
+        <Text style={styles.countText}>{count}</Text>
+      </View>
+
+      {/* Basra indicators */}
       {(basras > 0 || jackBasras > 0) && (
         <View style={styles.badges}>
           {basras > 0 && (
-            <Text style={styles.basraBadge}>B{basras}</Text>
+            <View style={styles.basraDot}>
+              <Text style={styles.basraText}>{basras}</Text>
+            </View>
           )}
           {jackBasras > 0 && (
-            <Text style={styles.jackBadge}>J{jackBasras}</Text>
+            <View style={styles.jackDot}>
+              <Text style={styles.jackText}>{jackBasras}</Text>
+            </View>
           )}
         </View>
       )}
@@ -56,39 +72,70 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     alignItems: 'center',
-    width: SMALL_W + 16,
+    width: PILE_W + 20,
   },
-  stack: {
-    width: SMALL_W,
-    height: SMALL_H,
+  stackWrap: {
+    width: PILE_W,
+    height: PILE_H,
     position: 'relative',
+  },
+  emptySlot: {
+    width: PILE_W,
+    height: PILE_H,
+    borderRadius: cardDimensions.borderRadius,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    borderStyle: 'dashed',
+    opacity: 0.25,
   },
   stackCard: {
     position: 'absolute',
-    width: SMALL_W,
-    height: SMALL_H,
+    width: PILE_W,
+    height: PILE_H,
     backgroundColor: colors.cardBack,
     borderRadius: cardDimensions.borderRadius,
     borderWidth: 1,
     borderColor: colors.cardBorder,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 2,
   },
-  count: {
-    fontSize: fontSize.sm,
+  countBadge: {
+    marginTop: 3,
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  countText: {
+    fontSize: fontSize.xs,
     fontWeight: '700',
     color: colors.textDim,
-    marginTop: 2,
   },
   badges: {
     flexDirection: 'row',
     gap: 3,
-    marginTop: 1,
+    marginTop: 2,
   },
-  basraBadge: {
+  basraDot: {
+    backgroundColor: 'rgba(233, 69, 96, 0.2)',
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  basraText: {
     fontSize: 8,
     fontWeight: '800',
     color: colors.primary,
   },
-  jackBadge: {
+  jackDot: {
+    backgroundColor: 'rgba(240, 192, 64, 0.2)',
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  jackText: {
     fontSize: 8,
     fontWeight: '800',
     color: colors.accent,

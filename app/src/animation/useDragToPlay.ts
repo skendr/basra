@@ -9,6 +9,7 @@ import {
   DRAG_SCALE,
   PREVIEW_WOBBLE_SCALE,
   SPRING_SETTLE,
+  SPRING_QUICK,
 } from './springs';
 import { animateSpring } from './utils';
 
@@ -28,7 +29,6 @@ export function useDragToPlay({
   onPlayCard,
 }: DragToPlayOptions) {
   const previewingRef = useRef<string[]>([]);
-  const startPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const clearPreview = useCallback(() => {
     for (const id of previewingRef.current) {
@@ -75,16 +75,13 @@ export function useDragToPlay({
           entity.isDragging.value = 1;
           entity.zIndex.value = 1000;
           entity.scale.value = withSpring(DRAG_SCALE, SPRING_SETTLE);
-          startPosRef.current = { x: entity.x.value, y: entity.y.value };
         })
         .onUpdate((e) => {
           'worklet';
           entity.dragOffsetX.value = e.translationX;
           entity.dragOffsetY.value = e.translationY;
-          // Slight rotation from velocity
           entity.rotation.value = e.velocityX * 0.00003;
 
-          // Check if over table zone
           const currentY = entity.y.value + e.translationY;
           if (entity.card) {
             const inTable = currentY > tableTop && currentY < tableBottom;
@@ -100,22 +97,33 @@ export function useDragToPlay({
           const dropY = entity.y.value + e.translationY;
           const overTable = dropY > tableTop && dropY < tableBottom;
 
-          entity.isDragging.value = 0;
+          // Transfer drag offset into base position so we can zero offsets
+          // without a visual jump, then spring to the target.
+          const visualX = entity.x.value + entity.dragOffsetX.value;
+          const visualY = entity.y.value + entity.dragOffsetY.value;
+          const origX = entity.x.value;
+          const origY = entity.y.value;
+
           entity.dragOffsetX.value = 0;
           entity.dragOffsetY.value = 0;
+          entity.isDragging.value = 0;
 
           if (overTable && entity.card) {
-            // Snap to table center
-            entity.x.value = withSpring(tableCenterX, SPRING_SETTLE);
-            entity.y.value = withSpring(tableCenterY, SPRING_SETTLE);
+            // Set to current visual pos, then spring to table center
+            entity.x.value = visualX;
+            entity.y.value = visualY;
+            entity.x.value = withSpring(tableCenterX, SPRING_QUICK);
+            entity.y.value = withSpring(tableCenterY, SPRING_QUICK);
             entity.scale.value = withSpring(1, SPRING_SETTLE);
             entity.rotation.value = withSpring(0, SPRING_SETTLE);
             runOnJS(clearPreview)();
             runOnJS(onPlayCard)(entity.card.id);
           } else {
-            // Spring back to start position
-            entity.x.value = withSpring(startPosRef.current.x, SPRING_SETTLE);
-            entity.y.value = withSpring(startPosRef.current.y, SPRING_SETTLE);
+            // Set to current visual pos, then spring back to origin
+            entity.x.value = visualX;
+            entity.y.value = visualY;
+            entity.x.value = withSpring(origX, SPRING_SETTLE);
+            entity.y.value = withSpring(origY, SPRING_SETTLE);
             entity.scale.value = withSpring(1, SPRING_SETTLE);
             entity.rotation.value = withSpring(0, SPRING_SETTLE);
             entity.zIndex.value = 10;

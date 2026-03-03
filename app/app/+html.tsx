@@ -29,7 +29,7 @@ html, body, #root {
   padding: 0;
 }
 body {
-  background-color: #1a1a2e;
+  background-color: #0d0d1a;
   overflow: hidden;
 }
 #root {

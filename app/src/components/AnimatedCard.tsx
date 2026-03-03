@@ -8,29 +8,31 @@ import { colors, cardDimensions } from '../theme';
 
 interface AnimatedCardProps {
   entity: CardEntity;
-  small?: boolean;
   gesture?: ReturnType<typeof Gesture.Pan>;
 }
 
-const CARD_W = cardDimensions.width;
-const CARD_H = cardDimensions.height;
+const W = cardDimensions.width;
+const H = cardDimensions.height;
+const HALF_W = W / 2;
+const HALF_H = H / 2;
 
-function AnimatedCardInner({ entity, small, gesture }: AnimatedCardProps) {
-  const scale = small ? 0.7 : 1;
-  const w = CARD_W * scale;
-  const h = CARD_H * scale;
-
+function AnimatedCardInner({ entity, gesture }: AnimatedCardProps) {
   const animatedStyle = useAnimatedStyle(() => {
+    const dragging = entity.isDragging.value === 1;
     return {
       transform: [
-        { translateX: entity.x.value + entity.dragOffsetX.value - w / 2 },
-        { translateY: entity.y.value + entity.dragOffsetY.value - h / 2 },
+        { translateX: entity.x.value + entity.dragOffsetX.value - HALF_W },
+        { translateY: entity.y.value + entity.dragOffsetY.value - HALF_H },
         { rotate: `${entity.rotation.value}rad` },
         { scale: entity.scale.value },
         { scaleX: entity.scaleX.value },
       ],
       opacity: entity.opacity.value,
       zIndex: entity.zIndex.value,
+      // Deeper shadow while dragging
+      shadowOpacity: dragging ? 0.45 : 0.2,
+      shadowRadius: dragging ? 12 : 3,
+      shadowOffset: { width: 0, height: dragging ? 8 : 2 },
     };
   });
 
@@ -39,37 +41,23 @@ function AnimatedCardInner({ entity, small, gesture }: AnimatedCardProps) {
 
   const content = faceUp && card ? (
     <>
-      <Text
-        style={[
-          styles.rankTop,
-          { color: getSuitColor(card.suit) },
-        ]}
-      >
+      <Text style={[styles.rankTop, { color: getSuitColor(card.suit) }]}>
         {getDisplayRank(card.rank)}
       </Text>
-      <Text
-        style={[
-          styles.suitCenter,
-          {
-            color: getSuitColor(card.suit),
-            fontSize: small ? 18 : 24,
-          },
-        ]}
-      >
+      <Text style={[styles.suitCenter, { color: getSuitColor(card.suit) }]}>
         {getSuitSymbol(card.suit)}
       </Text>
-      <Text
-        style={[
-          styles.rankBottom,
-          { color: getSuitColor(card.suit) },
-        ]}
-      >
+      <Text style={[styles.rankBottom, { color: getSuitColor(card.suit) }]}>
         {getDisplayRank(card.rank)}
       </Text>
     </>
   ) : (
-    <View style={styles.backPattern}>
-      <Text style={styles.backText}>B</Text>
+    <View style={styles.backInner}>
+      <View style={styles.backBorder}>
+        <View style={styles.backDiamond}>
+          <Text style={styles.backLogo}>B</Text>
+        </View>
+      </View>
     </View>
   );
 
@@ -77,7 +65,6 @@ function AnimatedCardInner({ entity, small, gesture }: AnimatedCardProps) {
     <Animated.View
       style={[
         styles.card,
-        { width: w, height: h, position: 'absolute' },
         !faceUp && styles.cardBack,
         animatedStyle,
       ]}
@@ -97,13 +84,17 @@ export default memo(AnimatedCardInner);
 
 const styles = StyleSheet.create({
   card: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: W,
+    height: H,
     backgroundColor: '#fff',
     borderRadius: cardDimensions.borderRadius,
     borderWidth: 1,
     borderColor: '#ddd',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -114,16 +105,38 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cardBack,
     borderColor: colors.cardBorder,
   },
-  backPattern: {
+  // Card back design
+  backInner: {
     flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+  },
+  backBorder: {
+    flex: 1,
+    width: '100%',
+    borderRadius: 3,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    opacity: 0.35,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: {
-    fontSize: 20,
+  backDiamond: {
+    width: 22,
+    height: 22,
+    transform: [{ rotate: '45deg' }],
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backLogo: {
+    fontSize: 10,
     fontWeight: '900',
     color: colors.accent,
-    opacity: 0.4,
+    transform: [{ rotate: '-45deg' }],
   },
   rankTop: {
     position: 'absolute',
