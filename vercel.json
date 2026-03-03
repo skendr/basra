@@ -3,10 +3,10 @@
   "outputDirectory": "app/dist",
   "installCommand": "npm install",
   "framework": null,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!_expo|assets|favicon).*)",
+      "destination": "/index.html"
     }
   ]
 }
