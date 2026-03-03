@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "b5b6ef746310",
+  "session_id": "2fea3a0d-48fd-4ffc-baf8-abe08f74c326",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-03T23:56:48.916721Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "app/app/+html.tsx",
+    "app/app/[code].tsx",
+    "app/app/_layout.tsx",
+    "app/app/lobby.tsx",
+    "app/src/animation/useGameLayout.ts",
+    "app/src/components/GameBoard.tsx"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "eefa45e6-a2c9-43f0-84f4-63f9299e10a3",
+  "checkpoint_transcript_start": 1777,
+  "transcript_lines_at_start": 1777,
+  "token_usage": {
+    "input_tokens": 107,
+    "cache_creation_tokens": 87635,
+    "cache_read_tokens": 7469217,
+    "output_tokens": 19632,
+    "api_call_count": 85
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-03T23:56:47.996322Z",
+    "agent_lines": 115,
+    "human_added": 583,
+    "human_modified": 169,
+    "human_removed": 0,
+    "total_committed": 867,
+    "agent_percentage": 13.264129181084197
+  },
+  "transcript_path": ".claude/projects/-Users-iz-Documents-projects-basra/2fea3a0d-48fd-4ffc-baf8-abe08f74c326.jsonl"
+}
