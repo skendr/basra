@@ -6,23 +6,21 @@ import type { BoardDimensions, GameLayout, ZoneLayout } from './types';
 const CARD_W = cardDimensions.width;
 const CARD_H = cardDimensions.height;
 const SMALL_SCALE = 0.7;
-const SMALL_W = CARD_W * SMALL_SCALE;
-const SMALL_H = CARD_H * SMALL_SCALE;
+
+/** Reference board width where cardScale = 1 */
+const REF_WIDTH = 400;
 
 /**
- * Hand fan: cards spread with ~55px gap (max),
- * slight parabolic arc (6px height), rotation ±0.04rad from center.
+ * Hand fan: cards spread with scaled gap,
+ * slight parabolic arc, rotation ±0.04rad from center.
  */
 export function getHandPositions(
   count: number,
   zoneCenter: { x: number; y: number },
-  maxGap: number = 55,
-  boardWidth: number = 400
+  scale: number = 1
 ): { x: number; y: number; rotation: number }[] {
   if (count === 0) return [];
-  // Scale gap for small screens so cards don't overflow
-  const scaledMax = Math.min(maxGap, boardWidth * 0.14);
-  const gap = Math.min(scaledMax, 55);
+  const gap = 55 * scale;
   const totalWidth = gap * (count - 1);
   const startX = zoneCenter.x - totalWidth / 2;
   const positions: { x: number; y: number; rotation: number }[] = [];
@@ -31,7 +29,7 @@ export function getHandPositions(
     const t = count === 1 ? 0 : (i / (count - 1)) * 2 - 1; // -1 to 1
     positions.push({
       x: startX + i * gap,
-      y: zoneCenter.y + Math.abs(t) * 6, // gentle arc
+      y: zoneCenter.y + Math.abs(t) * 6 * scale,
       rotation: t * 0.04,
     });
   }
@@ -43,10 +41,11 @@ export function getHandPositions(
  */
 export function getOpponentHandPositions(
   count: number,
-  zoneCenter: { x: number; y: number }
+  zoneCenter: { x: number; y: number },
+  scale: number = 1
 ): { x: number; y: number; rotation: number }[] {
   if (count === 0) return [];
-  const gap = 28;
+  const gap = 28 * scale;
   const totalWidth = gap * (count - 1);
   const startX = zoneCenter.x - totalWidth / 2;
   const positions: { x: number; y: number; rotation: number }[] = [];
@@ -55,7 +54,7 @@ export function getOpponentHandPositions(
     const t = count === 1 ? 0 : (i / (count - 1)) * 2 - 1;
     positions.push({
       x: startX + i * gap,
-      y: zoneCenter.y + Math.abs(t) * 3,
+      y: zoneCenter.y + Math.abs(t) * 3 * scale,
       rotation: t * 0.03,
     });
   }
@@ -67,12 +66,15 @@ export function getOpponentHandPositions(
  */
 export function getTablePositions(
   count: number,
-  zone: ZoneLayout
+  zone: ZoneLayout,
+  scale: number = 1
 ): { x: number; y: number; rotation: number }[] {
   if (count === 0) return [];
+  const smallW = CARD_W * SMALL_SCALE * scale;
+  const smallH = CARD_H * SMALL_SCALE * scale;
   const cols = Math.min(5, count);
-  const colGap = SMALL_W + 12;
-  const rowGap = SMALL_H + 8;
+  const colGap = smallW + 12 * scale;
+  const rowGap = smallH + 8 * scale;
   const rows = Math.ceil(count / cols);
   const gridWidth = cols * colGap;
   const gridHeight = rows * rowGap;
@@ -87,8 +89,8 @@ export function getTablePositions(
     const col = i % cols;
     const row = Math.floor(i / cols);
     // Deterministic jitter from index
-    const jx = ((i * 7 + 3) % 13) - 6;
-    const jy = ((i * 11 + 5) % 13) - 6;
+    const jx = (((i * 7 + 3) % 13) - 6) * scale;
+    const jy = (((i * 11 + 5) % 13) - 6) * scale;
     const jr = ((i * 13 + 2) % 9 - 4) * 0.015;
     positions.push({
       x: baseX + col * colGap + jx,
@@ -111,6 +113,10 @@ export function useGameLayout() {
     if (board.width === 0 || board.height === 0) return null;
     const { width: W, height: H } = board;
 
+    // Scale cards relative to reference width
+    const cardScale = Math.max(0.6, Math.min(1.3, W / REF_WIDTH));
+    const s = cardScale; // shorthand
+
     const opponentHand: ZoneLayout = {
       x: 0,
       y: 0,
@@ -119,31 +125,31 @@ export function useGameLayout() {
     };
 
     const opponentPile: ZoneLayout = {
-      x: W - 56,
+      x: W - 56 * s,
       y: H * 0.09,
-      width: 46,
-      height: 64,
+      width: 46 * s,
+      height: 64 * s,
     };
 
     const table: ZoneLayout = {
-      x: 12,
+      x: 12 * s,
       y: H * 0.17,
-      width: W - 24,
+      width: W - 24 * s,
       height: H * 0.40,
     };
 
     const deck: ZoneLayout = {
-      x: 16,
+      x: 16 * s,
       y: H * 0.61,
-      width: CARD_W + 10,
-      height: CARD_H + 10,
+      width: (CARD_W + 10) * s,
+      height: (CARD_H + 10) * s,
     };
 
     const myPile: ZoneLayout = {
-      x: W - 56,
+      x: W - 56 * s,
       y: H * 0.61,
-      width: 46,
-      height: 64,
+      width: 46 * s,
+      height: 64 * s,
     };
 
     const myHand: ZoneLayout = {
@@ -155,6 +161,7 @@ export function useGameLayout() {
 
     return {
       board,
+      cardScale,
       opponentHand,
       opponentPile,
       table,

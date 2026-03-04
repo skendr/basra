@@ -7,10 +7,8 @@ interface CapturedPileProps {
   jackBasras: number;
   x: number;
   y: number;
+  cardScale?: number;
 }
-
-const PILE_W = 40;
-const PILE_H = 56;
 
 export default function CapturedPile({
   count,
@@ -18,15 +16,18 @@ export default function CapturedPile({
   jackBasras,
   x,
   y,
+  cardScale = 1,
 }: CapturedPileProps) {
   const stackCount = Math.min(3, count);
+  const pileW = 40 * cardScale;
+  const pileH = 56 * cardScale;
 
   return (
-    <View style={[styles.container, { left: x, top: y }]}>
+    <View style={[styles.container, { left: x, top: y, width: pileW + 20 * cardScale }]}>
       {/* Stack visual */}
-      <View style={styles.stackWrap}>
+      <View style={{ width: pileW, height: pileH, position: 'relative' as const }}>
         {count === 0 ? (
-          <View style={styles.emptySlot} />
+          <View style={[styles.emptySlot, { width: pileW, height: pileH }]} />
         ) : (
           [...Array(stackCount)].map((_, i) => (
             <View
@@ -34,8 +35,10 @@ export default function CapturedPile({
               style={[
                 styles.stackCard,
                 {
-                  top: -i * 2,
-                  left: -i * 1,
+                  width: pileW,
+                  height: pileH,
+                  top: -i * 2 * cardScale,
+                  left: -i * 1 * cardScale,
                   shadowOpacity: 0.1 + i * 0.05,
                 },
               ]}
@@ -72,16 +75,8 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     alignItems: 'center',
-    width: PILE_W + 20,
-  },
-  stackWrap: {
-    width: PILE_W,
-    height: PILE_H,
-    position: 'relative',
   },
   emptySlot: {
-    width: PILE_W,
-    height: PILE_H,
     borderRadius: cardDimensions.borderRadius,
     borderWidth: 1,
     borderColor: colors.cardBorder,
@@ -90,8 +85,6 @@ const styles = StyleSheet.create({
   },
   stackCard: {
     position: 'absolute',
-    width: PILE_W,
-    height: PILE_H,
     backgroundColor: colors.cardBack,
     borderRadius: cardDimensions.borderRadius,
     borderWidth: 1,

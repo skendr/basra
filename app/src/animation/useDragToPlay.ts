@@ -31,23 +31,25 @@ export function useDragToPlay({
   const previewingRef = useRef<string[]>([]);
 
   const clearPreview = useCallback(() => {
+    const cs = layout?.cardScale ?? 1;
     for (const id of previewingRef.current) {
       const e = entities.getEntity(id);
       if (e) {
-        e.scale.value = withSpring(1, SPRING_SETTLE);
+        e.scale.value = withSpring(0.7 * cs, SPRING_SETTLE);
       }
     }
     previewingRef.current = [];
-  }, [entities]);
+  }, [entities, layout]);
 
   const showCapturePreview = useCallback(
     (card: Card) => {
       clearPreview();
+      const cs = layout?.cardScale ?? 1;
       const captures = findCaptures(card, table);
       for (const captured of captures) {
         const e = entities.getEntity(captured.id);
         if (e) {
-          animateSpring(e.scale, PREVIEW_WOBBLE_SCALE, {
+          animateSpring(e.scale, PREVIEW_WOBBLE_SCALE * cs, {
             damping: 4,
             stiffness: 200,
             mass: 0.5,
@@ -56,7 +58,7 @@ export function useDragToPlay({
         }
       }
     },
-    [entities, table, clearPreview]
+    [entities, table, clearPreview, layout]
   );
 
   const createDragGesture = useCallback(
@@ -67,6 +69,7 @@ export function useDragToPlay({
       const tableBottom = layout.table.y + layout.table.height;
       const tableCenterX = layout.table.x + layout.table.width / 2;
       const tableCenterY = layout.table.y + layout.table.height / 2;
+      const cs = layout.cardScale;
 
       return Gesture.Pan()
         .enabled(isMyTurn)
@@ -74,7 +77,7 @@ export function useDragToPlay({
           'worklet';
           entity.isDragging.value = 1;
           entity.zIndex.value = 1000;
-          entity.scale.value = withSpring(DRAG_SCALE, SPRING_SETTLE);
+          entity.scale.value = withSpring(DRAG_SCALE * cs, SPRING_SETTLE);
         })
         .onUpdate((e) => {
           'worklet';
@@ -114,7 +117,7 @@ export function useDragToPlay({
             entity.y.value = visualY;
             entity.x.value = withSpring(tableCenterX, SPRING_QUICK);
             entity.y.value = withSpring(tableCenterY, SPRING_QUICK);
-            entity.scale.value = withSpring(1, SPRING_SETTLE);
+            entity.scale.value = withSpring(cs, SPRING_SETTLE);
             entity.rotation.value = withSpring(0, SPRING_SETTLE);
             runOnJS(clearPreview)();
             runOnJS(onPlayCard)(entity.card.id);
@@ -124,7 +127,7 @@ export function useDragToPlay({
             entity.y.value = visualY;
             entity.x.value = withSpring(origX, SPRING_SETTLE);
             entity.y.value = withSpring(origY, SPRING_SETTLE);
-            entity.scale.value = withSpring(1, SPRING_SETTLE);
+            entity.scale.value = withSpring(cs, SPRING_SETTLE);
             entity.rotation.value = withSpring(0, SPRING_SETTLE);
             entity.zIndex.value = 10;
             runOnJS(clearPreview)();

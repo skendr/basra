@@ -135,6 +135,8 @@ export default function GameBoard({
     return <View style={styles.container} onLayout={onBoardLayout} />;
   }
 
+  const cs = layout.cardScale;
+
   return (
     <GestureHandlerRootView style={styles.container} onLayout={onBoardLayout}>
       <BoardBackground layout={layout} isMyTurn={isMyTurn} />
@@ -160,6 +162,7 @@ export default function GameBoard({
         jackBasras={myJackBasras}
         x={layout.myPile.x}
         y={layout.myPile.y}
+        cardScale={cs}
       />
       <CapturedPile
         count={opponentCapturedCount}
@@ -167,6 +170,7 @@ export default function GameBoard({
         jackBasras={opponentJackBasras}
         x={layout.opponentPile.x}
         y={layout.opponentPile.y}
+        cardScale={cs}
       />
     </GestureHandlerRootView>
   );
@@ -174,7 +178,7 @@ export default function GameBoard({
 
 /**
  * Position all entities at correct zone positions.
- * Small-zone cards get scale=0.7 instead of different dimensions.
+ * Card visual size is controlled by cardScale via the scale transform.
  */
 function positionAllEntities(
   entities: ReturnType<typeof useCardEntities>,
@@ -183,66 +187,68 @@ function positionAllEntities(
   table: Card[],
   opponentCount: number
 ) {
-  // Hand cards (full-size)
+  const cs = layout.cardScale;
+
+  // Hand cards (full-size, scaled)
   const handCenter = {
     x: layout.myHand.x + layout.myHand.width / 2,
     y: layout.myHand.y + layout.myHand.height / 2,
   };
-  const handPositions = getHandPositions(hand.length, handCenter, 55, layout.board.width);
+  const handPositions = getHandPositions(hand.length, handCenter, cs);
   hand.forEach((card, i) => {
     const entity = entities.getEntity(card.id);
     if (entity && handPositions[i]) {
       entity.x.value = handPositions[i].x;
       entity.y.value = handPositions[i].y;
       entity.rotation.value = handPositions[i].rotation;
-      entity.scale.value = 1;
+      entity.scale.value = cs;
       entity.scaleX.value = 1;
       entity.opacity.value = 1;
       entity.zIndex.value = 10 + i;
     }
   });
 
-  // Table cards (small scale)
-  const tablePositions = getTablePositions(table.length, layout.table);
+  // Table cards (small scale, scaled)
+  const tablePositions = getTablePositions(table.length, layout.table, cs);
   table.forEach((card, i) => {
     const entity = entities.getEntity(card.id);
     if (entity && tablePositions[i]) {
       entity.x.value = tablePositions[i].x;
       entity.y.value = tablePositions[i].y;
       entity.rotation.value = tablePositions[i].rotation;
-      entity.scale.value = SMALL_SCALE;
+      entity.scale.value = SMALL_SCALE * cs;
       entity.scaleX.value = 1;
       entity.opacity.value = 1;
       entity.zIndex.value = 5 + i;
     }
   });
 
-  // Opponent hand (small scale, face-down)
+  // Opponent hand (small scale, face-down, scaled)
   const oppCenter = {
     x: layout.opponentHand.x + layout.opponentHand.width / 2,
-    y: layout.opponentHand.y + layout.opponentHand.height / 2 + 12,
+    y: layout.opponentHand.y + layout.opponentHand.height / 2 + 12 * cs,
   };
-  const oppPositions = getOpponentHandPositions(opponentCount, oppCenter);
+  const oppPositions = getOpponentHandPositions(opponentCount, oppCenter, cs);
   const oppEntities = entities.getEntitiesByZone('opponentHand');
   oppEntities.forEach((entity, i) => {
     if (oppPositions[i]) {
       entity.x.value = oppPositions[i].x;
       entity.y.value = oppPositions[i].y;
       entity.rotation.value = oppPositions[i].rotation;
-      entity.scale.value = SMALL_SCALE;
+      entity.scale.value = SMALL_SCALE * cs;
       entity.scaleX.value = 1;
       entity.opacity.value = 1;
       entity.zIndex.value = 1 + i;
     }
   });
 
-  // Deck stack
+  // Deck stack (scaled)
   const deckEntities = entities.getEntitiesByZone('deck');
   deckEntities.forEach((entity, i) => {
-    entity.x.value = layout.deck.x + layout.deck.width / 2 + i * 1.5;
-    entity.y.value = layout.deck.y + layout.deck.height / 2 - i * 2;
+    entity.x.value = layout.deck.x + layout.deck.width / 2 + i * 1.5 * cs;
+    entity.y.value = layout.deck.y + layout.deck.height / 2 - i * 2 * cs;
     entity.rotation.value = 0;
-    entity.scale.value = 1;
+    entity.scale.value = cs;
     entity.scaleX.value = 1;
     entity.opacity.value = 1;
     entity.zIndex.value = i;

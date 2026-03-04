@@ -42,6 +42,7 @@ export interface BoardDimensions {
 
 export interface GameLayout {
   board: BoardDimensions;
+  cardScale: number;
   opponentHand: ZoneLayout;
   opponentPile: ZoneLayout;
   table: ZoneLayout;
